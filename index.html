@@ -36,7 +36,7 @@
                 <!-- Command Box -->
                 <div class="relative mb-8">
                     <div class="cmd-box">
-                        <code>powershell -ExecutionPolicy Bypass -Command "iwr -useb https://win11setup.hydrahardware.io/setup.ps1 | iex"</code>
+                        <code>powershell -ExecutionPolicy Bypass -Command "iwr -useb https://cederikdotcom.github.io/Hydra-public/setup.ps1 | iex"</code>
                     </div>
                     <button id="copyButton" class="copy-button absolute right-2 top-2 bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm">
                         Copy
@@ -46,8 +46,8 @@
                 <p class="text-sm opacity-80">Simply copy the command above, paste it into Command Prompt during Windows Audit Mode, and press Enter</p>
                 
                 <p class="mt-4 text-sm">
-                    <a href="/setup.ps1" class="text-white underline hover:text-blue-200">View setup.ps1</a> | 
-                    <a href="/create-user.ps1" class="text-white underline hover:text-blue-200">View create-user.ps1</a>
+                    <a href="https://cederikdotcom.github.io/Hydra-public/setup.ps1" class="text-white underline hover:text-blue-200">View setup.ps1</a> | 
+                    <a href="https://cederikdotcom.github.io/Hydra-public/create-user.ps1" class="text-white underline hover:text-blue-200">View create-user.ps1</a>
                 </p>
             </div>
         </div>
@@ -147,13 +147,13 @@
             </div>
             
             <div class="mb-8">
-                <h3 class="text-xl font-semibold mb-2">What VR headsets are supported?</h3>
-                <p class="text-gray-600">The script supports all major VR headsets including Oculus/Meta Quest, Valve Index, HTC Vive, and Windows Mixed Reality headsets.</p>
+                <h3 class="text-xl font-semibold mb-2">What is included in the setup?</h3>
+                <p class="text-gray-600">The script installs and configures drivers, VR software platforms (Steam VR, Oculus, etc.), essential utilities, and optimizes Windows for maximum VR performance. It also includes a helper script to create a local user account before leaving Audit Mode.</p>
             </div>
             
             <div class="mb-8">
-                <h3 class="text-xl font-semibold mb-2">Will this affect my existing software?</h3>
-                <p class="text-gray-600">No, the script only installs and configures new software. It doesn't remove or modify your existing applications unless specifically required for performance optimization.</p>
+                <h3 class="text-xl font-semibold mb-2">What VR headsets are supported?</h3>
+                <p class="text-gray-600">The script supports all major VR headsets including Oculus/Meta Quest, Valve Index, HTC Vive, and Windows Mixed Reality headsets.</p>
             </div>
             
             <div>
@@ -171,8 +171,9 @@
                     <p>&copy; 2025 HydraHardware. All rights reserved.</p>
                 </div>
                 <div class="flex space-x-4">
-                    <a href="https://github.com/your-username/win11-vr-setup" class="hover:text-blue-400">GitHub</a>
-                    <a href="#" class="hover:text-blue-400">Documentation</a>
+                    <a href="https://github.com/cederikdotcom/Hydra-public" class="hover:text-blue-400">GitHub</a>
+                    <a href="https://cederikdotcom.github.io/Hydra-public/setup.ps1" class="hover:text-blue-400">setup.ps1</a>
+                    <a href="https://cederikdotcom.github.io/Hydra-public/create-user.ps1" class="hover:text-blue-400">create-user.ps1</a>
                     <a href="#" class="hover:text-blue-400">Contact</a>
                 </div>
             </div>
@@ -182,7 +183,7 @@
     <!-- JavaScript for Copy Button -->
     <script>
         document.getElementById('copyButton').addEventListener('click', function() {
-            const commandText = "powershell -ExecutionPolicy Bypass -Command \"iwr -useb https://win11setup.hydrahardware.io/setup.ps1 | iex\"";
+            const commandText = "powershell -ExecutionPolicy Bypass -Command \"iwr -useb https://cederikdotcom.github.io/Hydra-public/setup.ps1 | iex\"";
             navigator.clipboard.writeText(commandText).then(function() {
                 const button = document.getElementById('copyButton');
                 button.textContent = 'Copied!';
