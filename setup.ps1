@@ -86,13 +86,25 @@ Write-ColorOutput Cyan "STEP 3: Installing VR Software and Gaming Platforms..."
 
 # Install essential software
 $software = @(
-    "steam"
+    "steam",
+"steamcmd"
 )
 
 foreach ($app in $software) {
     Write-Output "Installing $app..."
     choco install $app -y
 }
+
+# Ensure Steam is fully updated during installation
+Write-Output "Forcing Steam update during installation..."
+Start-Process -FilePath "C:\Program Files (x86)\Steam\Steam.exe" -ArgumentList "-silent", "-login", "anonymous" -NoNewWindow -Wait
+Start-Sleep -Seconds 5
+$steamProcess = Get-Process -Name "Steam" -ErrorAction SilentlyContinue
+if ($steamProcess) {
+    $steamProcess | Stop-Process -Force
+    Start-Sleep -Seconds 2
+}
+Write-Output "Steam update completed."
 
 # Install additional utilities with WinGet if available
 if (Get-Command winget -ErrorAction SilentlyContinue) {
