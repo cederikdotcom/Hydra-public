@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HydraHardware - Windows 11 VR Setup</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <style>
+        .cmd-box {
+            background-color: #0C0C0C;
+            border-radius: 4px;
+            padding: 16px;
+            font-family: Consolas, monospace;
+            color: #CCCCCC;
+            overflow-x: auto;
+        }
+        .copy-button {
+            transition: all 0.2s ease;
+        }
+        .copy-button:hover {
+            background-color: #374151;
+        }
+        .hero-bg {
+            background: linear-gradient(135deg, #4338CA, #3B82F6);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Hero Section -->
+    <div class="hero-bg text-white">
+        <div class="container mx-auto px-4 py-16 md:py-24">
+            <div class="max-w-3xl mx-auto text-center">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">Windows 11 VR Setup</h1>
+                <p class="text-xl mb-8">Optimize your Windows 11 machine for VR gaming with a single command</p>
+                
+                <!-- Command Box -->
+                <div class="relative mb-8">
+                    <div class="cmd-box">
+                        <code>powershell -ExecutionPolicy Bypass -Command "iwr -useb https://win11setup.hydrahardware.io/setup.ps1 | iex"</code>
+                    </div>
+                    <button id="copyButton" class="copy-button absolute right-2 top-2 bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm">
+                        Copy
+                    </button>
+                </div>
+                
+                <p class="text-sm opacity-80">Simply copy the command above, paste it into a Command Prompt during Windows Audit Mode, and press Enter</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Features Section -->
+    <div class="container mx-auto px-4 py-16">
+        <h2 class="text-3xl font-bold text-center mb-12">What This Script Does</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Feature 1 -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <h3 class="text-xl font-semibold mb-2">Latest Drivers</h3>
+                <p class="text-gray-600">Automatically installs the latest GPU, motherboard, and VR device drivers for optimal performance.</p>
+            </div>
+            
+            <!-- Feature 2 -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+                <h3 class="text-xl font-semibold mb-2">Performance Optimization</h3>
+                <p class="text-gray-600">Configures Windows settings for maximum VR performance, reducing latency and increasing frame rates.</p>
+            </div>
+            
+            <!-- Feature 3 -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                </svg>
+                <h3 class="text-xl font-semibold mb-2">Essential Software</h3>
+                <p class="text-gray-600">Installs and configures all necessary VR software platforms, utilities, and gaming applications.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- How It Works Section -->
+    <div class="bg-gray-50 py-16">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center mb-12">How It Works</h2>
+            
+            <div class="max-w-3xl mx-auto">
+                <div class="flex flex-col md:flex-row items-start mb-8">
+                    <div class="flex-shrink-0 bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-xl mb-4 md:mb-0 md:mr-4">1</div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">Enter Audit Mode</h3>
+                        <p class="text-gray-600">During Windows setup, press Ctrl+Shift+F3 at the OOBE screen to enter Audit Mode, which allows for clean system configuration before creating a user account.</p>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col md:flex-row items-start mb-8">
+                    <div class="flex-shrink-0 bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-xl mb-4 md:mb-0 md:mr-4">2</div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">Run the Command</h3>
+                        <p class="text-gray-600">Open Command Prompt in Audit Mode and paste the single-line command. This downloads our setup script and begins execution.</p>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col md:flex-row items-start mb-8">
+                    <div class="flex-shrink-0 bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-xl mb-4 md:mb-0 md:mr-4">2</div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">Automatic Setup</h3>
+                        <p class="text-gray-600">The script installs package managers (Chocolatey and WinGet), then uses them to install and configure all necessary software.</p>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col md:flex-row items-start">
+                    <div class="flex-shrink-0 bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-xl mb-4 md:mb-0 md:mr-4">3</div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">Optimization</h3>
+                        <p class="text-gray-600">Windows settings are automatically tuned for VR performance, including power plans, visual effects, and system configurations.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- FAQ Section -->
+    <div class="container mx-auto px-4 py-16">
+        <h2 class="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
+        
+        <div class="max-w-3xl mx-auto">
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-2">Is this safe to run?</h3>
+                <p class="text-gray-600">Yes! The script is open source and available on <a href="https://github.com/your-username/win11-vr-setup" class="text-blue-600 hover:underline">GitHub</a>. You can review all code before running it. The script doesn't collect any data or make any irreversible changes to your system.</p>
+            </div>
+            
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-2">What VR headsets are supported?</h3>
+                <p class="text-gray-600">The script supports all major VR headsets including Oculus/Meta Quest, Valve Index, HTC Vive, and Windows Mixed Reality headsets.</p>
+            </div>
+            
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-2">Will this affect my existing software?</h3>
+                <p class="text-gray-600">No, the script only installs and configures new software. It doesn't remove or modify your existing applications unless specifically required for performance optimization.</p>
+            </div>
+            
+            <div>
+                <h3 class="text-xl font-semibold mb-2">How long does setup take?</h3>
+                <p class="text-gray-600">The entire process typically takes 15-30 minutes, depending on your internet connection speed and system specifications.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <p>&copy; 2025 HydraHardware. All rights reserved.</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="https://github.com/your-username/win11-vr-setup" class="hover:text-blue-400">GitHub</a>
+                    <a href="#" class="hover:text-blue-400">Documentation</a>
+                    <a href="#" class="hover:text-blue-400">Contact</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- JavaScript for Copy Button -->
+    <script>
+        document.getElementById('copyButton').addEventListener('click', function() {
+            const commandText = "powershell -ExecutionPolicy Bypass -Command \"iwr -useb https://win11setup.hydrahardware.io/setup.ps1 | iex\"";
+            navigator.clipboard.writeText(commandText).then(function() {
+                const button = document.getElementById('copyButton');
+                button.textContent = 'Copied!';
+                button.classList.add('bg-green-600');
+                
+                setTimeout(function() {
+                    button.textContent = 'Copy';
+                    button.classList.remove('bg-green-600');
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>
