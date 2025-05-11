@@ -74,43 +74,19 @@ else {
 
 # Step 2: Install Latest Drivers
 Write-ColorOutput Cyan "STEP 2: Installing Latest Drivers..."
-
-# Detect GPU Type
-$gpuInfo = Get-WmiObject Win32_VideoController | Select-Object Name, AdapterCompatibility
-$isNvidia = $gpuInfo.Name -match "NVIDIA" -or $gpuInfo.AdapterCompatibility -match "NVIDIA"
-$isAMD = $gpuInfo.Name -match "AMD" -or $gpuInfo.AdapterCompatibility -match "AMD"
-$isIntel = $gpuInfo.Name -match "Intel" -or $gpuInfo.AdapterCompatibility -match "Intel"
-
-# Install the appropriate GPU drivers
-if ($isNvidia) {
-    Write-Output "NVIDIA GPU detected. Installing latest drivers..."
+Write-Output "NVIDIA GPU RTX 5070ti assumed. Installing latest drivers..."
     choco install nvidia-display-driver -y
-} 
+
 elseif ($isAMD) {
-    Write-Output "AMD GPU detected. Installing latest drivers..."
+    Write-Output "AMD CPU Ryzen 7 9800X3D assumed. Installing latest drivers..."
     choco install amd-ryzen-chipset -y
-} 
-elseif ($isIntel) {
-    Write-Output "Intel GPU detected. Installing latest drivers..."
-    winget install Intel.IntelDriverAndSupportAssistant --accept-package-agreements --accept-source-agreements
-} 
-else {
-    Write-Output "Could not detect GPU type. Please install GPU drivers manually."
-}
 
 # Step 3: Install VR Software and Gaming Platforms
 Write-ColorOutput Cyan "STEP 3: Installing VR Software and Gaming Platforms..."
 
 # Install essential software
 $software = @(
-    "steam",
-    "epicgameslauncher",
-    "oculusriftsetup",
-    "vivesetup",
-    "7zip",
-    "vcredist-all",
-    "directx",
-    "microsoft-visual-cpp-build-tools"
+    "steam"
 )
 
 foreach ($app in $software) {
