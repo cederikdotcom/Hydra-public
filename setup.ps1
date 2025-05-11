@@ -30,6 +30,7 @@ Write-Output "  1. Install package managers (Chocolatey and WinGet)"
 Write-Output "  2. Install latest drivers"
 Write-Output "  3. Install VR software and gaming platforms"
 Write-Output "  4. Optimize Windows settings for VR performance"
+Write-Output "  5. Remove Windows bloatware"
 Write-Output ""
 Write-Output "Press Enter to continue or Ctrl+C to cancel..."
 Read-Host
@@ -74,12 +75,11 @@ else {
 
 # Step 2: Install Latest Drivers
 Write-ColorOutput Cyan "STEP 2: Installing Latest Drivers..."
-Write-Output "NVIDIA GPU RTX 5070ti assumed. Installing latest drivers..."
-    choco install nvidia-display-driver -y
-
-elseif ($isAMD) {
-    Write-Output "AMD CPU Ryzen 7 9800X3D assumed. Installing latest drivers..."
-    choco install amd-ryzen-chipset -y
+Write-Output "NVIDIA GPU RTX 5070ti and AMD CPU Ryzen 7 9800X3D assumed. Installing latest drivers..."
+# Install NVIDIA GPU drivers
+choco install nvidia-display-driver -y
+# Install AMD CPU chipset drivers
+choco install amd-ryzen-chipset -y
 
 # Step 3: Install VR Software and Gaming Platforms
 Write-ColorOutput Cyan "STEP 3: Installing VR Software and Gaming Platforms..."
@@ -97,7 +97,6 @@ foreach ($app in $software) {
 # Install additional utilities with WinGet if available
 if (Get-Command winget -ErrorAction SilentlyContinue) {
     $wingetApps = @(
-        "Microsoft.PowerToys",
         "Microsoft.DotNet.DesktopRuntime.7",
         "Microsoft.VCRedist.2015+.x64"
     )
@@ -168,6 +167,81 @@ try {
 } catch {
     Write-Output "PCIe mode will need to be set manually in BIOS."
 }
+
+# Step 5: Remove Windows Bloatware
+Write-ColorOutput Cyan "STEP 5: Removing Windows Bloatware..."
+
+# List of bloatware apps to remove
+$bloatwareApps = @(
+    "Microsoft.3DBuilder",
+    "Microsoft.BingNews",
+    "Microsoft.BingWeather",
+    "Microsoft.GetHelp",
+    "Microsoft.Getstarted",
+    "Microsoft.MicrosoftOfficeHub",
+    "Microsoft.MicrosoftSolitaireCollection",
+    "Microsoft.MixedReality.Portal",
+    "Microsoft.People",
+    "Microsoft.SkypeApp",
+    "Microsoft.WindowsAlarms",
+    "Microsoft.WindowsFeedbackHub",
+    "Microsoft.WindowsMaps",
+    "Microsoft.WindowsSoundRecorder",
+    "Microsoft.Xbox.TCUI",
+    "Microsoft.XboxApp",
+    "Microsoft.XboxGameOverlay",
+    "Microsoft.XboxGamingOverlay",
+    "Microsoft.XboxIdentityProvider",
+    "Microsoft.XboxSpeechToTextOverlay",
+    "Microsoft.YourPhone",
+    "Microsoft.ZuneMusic",
+    "Microsoft.ZuneVideo",
+    "Microsoft.549981C3F5F10", # Cortana
+    "Microsoft.Advertising.Xaml",
+    "Microsoft.Wallet",
+    "Microsoft.MicrosoftStickyNotes",
+    "Microsoft.Windows.Photos",
+    "Microsoft.WindowsCamera",
+    "Microsoft.WindowsCalculator"
+)
+
+# Remove bloatware
+foreach ($app in $bloatwareApps) {
+    Write-Output "Removing $app..."
+    
+    # Try with Get-AppxPackage
+    Get-AppxPackage -Name $app -AllUsers | Remove-AppxPackage -ErrorAction SilentlyContinue
+    
+    # Try with WinGet if available
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        winget uninstall $app --silent --accept-source-agreements --force -ErrorAction SilentlyContinue
+    }
+}
+
+# Disable Consumer Features
+Write-Output "Disabling Windows consumer features..."
+if (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent")) {
+    New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Force | Out-Null
+}
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent" -Name "DisableWindowsConsumerFeatures" -Type DWORD -Value 1
+
+# Disable Suggestions in Start Menu
+Write-Output "Disabling suggestions and ads in Start Menu..."
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SystemPaneSuggestionsEnabled" -Type DWORD -Value 0
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338388Enabled" -Type DWORD -Value 0
+
+# Disable Activity History
+Write-Output "Disabling Activity History..."
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "EnableActivityFeed" -Type DWORD -Value 0
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "PublishUserActivities" -Type DWORD -Value 0
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System" -Name "UploadUserActivities" -Type DWORD -Value 0
+
+# Disable Customer Experience Improvement Program
+Write-Output "Disabling Customer Experience Improvement Program..."
+if (!(Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows")) {
+    New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows" -Force | Out-Null
+}
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\SQMClient\Windows" -Name "CEIPEnable" -Type DWORD -Value 0
 
 # Final Message
 Write-ColorOutput Green "======================================"
