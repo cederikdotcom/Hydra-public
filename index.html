@@ -43,7 +43,12 @@
                     </button>
                 </div>
                 
-                <p class="text-sm opacity-80">Simply copy the command above, paste it into a Command Prompt during Windows Audit Mode, and press Enter</p>
+                <p class="text-sm opacity-80">Simply copy the command above, paste it into Command Prompt during Windows Audit Mode, and press Enter</p>
+                
+                <p class="mt-4 text-sm">
+                    <a href="/setup.ps1" class="text-white underline hover:text-blue-200">View setup.ps1</a> | 
+                    <a href="/create-user.ps1" class="text-white underline hover:text-blue-200">View create-user.ps1</a>
+                </p>
             </div>
         </div>
     </div>
@@ -105,18 +110,26 @@
                 </div>
                 
                 <div class="flex flex-col md:flex-row items-start mb-8">
-                    <div class="flex-shrink-0 bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-xl mb-4 md:mb-0 md:mr-4">2</div>
+                    <div class="flex-shrink-0 bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-xl mb-4 md:mb-0 md:mr-4">3</div>
                     <div>
                         <h3 class="text-xl font-semibold mb-2">Automatic Setup</h3>
                         <p class="text-gray-600">The script installs package managers (Chocolatey and WinGet), then uses them to install and configure all necessary software.</p>
                     </div>
                 </div>
                 
-                <div class="flex flex-col md:flex-row items-start">
-                    <div class="flex-shrink-0 bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-xl mb-4 md:mb-0 md:mr-4">3</div>
+                <div class="flex flex-col md:flex-row items-start mb-8">
+                    <div class="flex-shrink-0 bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-xl mb-4 md:mb-0 md:mr-4">4</div>
                     <div>
                         <h3 class="text-xl font-semibold mb-2">Optimization</h3>
                         <p class="text-gray-600">Windows settings are automatically tuned for VR performance, including power plans, visual effects, and system configurations.</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col md:flex-row items-start">
+                    <div class="flex-shrink-0 bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-xl mb-4 md:mb-0 md:mr-4">5</div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">Create User Account</h3>
+                        <p class="text-gray-600">After setup is complete, run Sysprep to exit Audit Mode and create your user account with all optimizations already in place.</p>
                     </div>
                 </div>
             </div>
