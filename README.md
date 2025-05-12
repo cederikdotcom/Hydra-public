@@ -45,6 +45,10 @@ A helper script to create a local administrator account before exiting Audit Mod
 ## What it installs
 
 ### Drivers
+- nvidiadisplaydrivers for gpu through choco
+- amd-ryzen-chipset for cpu through choco
+- [x870 drivers for motherboard](https://rog.asus.com/motherboards/rog-strix/rog-strix-x870-f-gaming-wifi/helpdesk_download/)
+
 ### VR Software
 - Steam
 - [todo] steam vr
