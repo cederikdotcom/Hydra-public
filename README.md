@@ -54,6 +54,11 @@ A helper script to create a local administrator account before exiting Audit Mod
 - [todo] steam vr
 - [todo meta quest link to support tethered quest 3 as backup]
 
+## What it configures
+
+### VR 
+- Steam to launch on startup 
+
 ## Requirements
 
 - Windows 11 installation (fresh install recommended)
