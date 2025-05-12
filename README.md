@@ -42,6 +42,14 @@ A helper script to create a local administrator account before exiting Audit Mod
 - **Wake-on-LAN**: Configures network adapters for remote wake capabilities
 - **PCIe Gen4**: Attempts to enable PCIe Gen4 mode for compatible hardware
 
+## What it installs
+
+### Drivers
+### VR Software
+- Steam
+- [todo] steam vr
+- [todo meta quest link to support tethered quest 3 as backup]
+
 ## Requirements
 
 - Windows 11 installation (fresh install recommended)
