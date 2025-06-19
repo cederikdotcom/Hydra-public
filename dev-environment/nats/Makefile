@@ -90,7 +90,15 @@ setup: ## Initial setup - prepare environment (use quick-start for full setup)
 		echo "❌ docker-compose.yml not found. Please ensure you're in the hydra-public/dev-environment/nats directory"; \
 		exit 1; \
 	fi
+	@if [ ! -f nats/nats-server.conf ]; then \
+		echo "❌ nats/nats-server.conf not found. Please ensure the config file exists"; \
+		exit 1; \
+	fi
+	@echo "🔧 Creating logs directory with proper permissions..."
 	@mkdir -p nats/logs
+	@chown -R $(shell id -u):$(shell id -g) nats/logs 2>/dev/null || \
+		sudo chown -R $(shell id -u):$(shell id -g) nats/logs || \
+		echo "⚠️  Could not fix permissions for nats/logs - you may need to run: sudo chown -R $USER:$USER nats/logs"
 	@echo "✅ Setup complete"
 	@echo "💡 Use 'make quick-start' for automatic Docker installation and startup"
 
@@ -102,21 +110,33 @@ start: ## Start HYDRA development NATS server
 		echo "❌ Docker is not running. Please start Docker first."; \
 		exit 1; \
 	fi
+	@echo "🔧 Ensuring proper setup..."
+	@$(MAKE) setup
 	@echo "📡 Starting NATS server..."
 	@docker compose up -d nats
 	@echo "⏳ Waiting for NATS to be ready..."
 	@timeout=30; \
-	while [ $$timeout -gt 0 ]; do \
+	while [ $timeout -gt 0 ]; do \
 		if curl -f http://localhost:8222/healthz > /dev/null 2>&1; then \
 			echo "✅ NATS is ready on localhost:4222"; \
 			break; \
 		fi; \
 		sleep 1; \
-		timeout=$$((timeout-1)); \
+		timeout=$((timeout-1)); \
 	done; \
-	if [ $$timeout -eq 0 ]; then \
+	if [ $timeout -eq 0 ]; then \
 		echo "❌ NATS failed to start properly"; \
-		docker compose logs nats; \
+		echo "📋 Container logs:"; \
+		docker compose logs nats --tail=20; \
+		echo ""; \
+		echo "🔍 Container status:"; \
+		docker compose ps; \
+		echo ""; \
+		echo "💡 Troubleshooting tips:"; \
+		echo "   1. Check config file: cat nats/nats-server.conf"; \
+		echo "   2. Check permissions: ls -la nats/"; \
+		echo "   3. Try basic NATS: docker run --rm -p 4222:4222 nats:2.11-alpine"; \
+		echo "   4. Check ports: netstat -an | grep ':4222\\|:8222'"; \
 		exit 1; \
 	fi
 	@echo ""
@@ -253,6 +273,64 @@ debug: ## Show debug information
 	@echo ""
 	@echo "Environment Files:"
 	@ls -la nats/ 2>/dev/null || echo "  nats/ directory not found"
+	@echo ""
+	@echo "Recent Container Logs:"
+	@docker compose logs nats --tail=10 2>/dev/null || echo "  No container logs available"
+
+troubleshoot: ## Run comprehensive troubleshooting
+	@echo "🔧 HYDRA Development Environment Troubleshooting"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "1. Checking file structure..."
+	@if [ -f docker-compose.yml ]; then \
+		echo "✅ docker-compose.yml exists"; \
+	else \
+		echo "❌ docker-compose.yml missing"; \
+	fi
+	@if [ -f nats/nats-server.conf ]; then \
+		echo "✅ nats-server.conf exists"; \
+	else \
+		echo "❌ nats-server.conf missing"; \
+	fi
+	@if [ -d nats/logs ]; then \
+		echo "✅ logs directory exists"; \
+		ls -la nats/logs/; \
+	else \
+		echo "❌ logs directory missing"; \
+	fi
+	@echo ""
+	@echo "2. Checking Docker..."
+	@if docker info >/dev/null 2>&1; then \
+		echo "✅ Docker is running"; \
+		docker --version; \
+	else \
+		echo "❌ Docker is not running or accessible"; \
+	fi
+	@echo ""
+	@echo "3. Checking ports..."
+	@if netstat -an 2>/dev/null | grep -q ":4222"; then \
+		echo "⚠️  Port 4222 is already in use:"; \
+		netstat -an | grep ":4222"; \
+	else \
+		echo "✅ Port 4222 is available"; \
+	fi
+	@if netstat -an 2>/dev/null | grep -q ":8222"; then \
+		echo "⚠️  Port 8222 is already in use:"; \
+		netstat -an | grep ":8222"; \
+	else \
+		echo "✅ Port 8222 is available"; \
+	fi
+	@echo ""
+	@echo "4. Testing basic NATS container..."
+	@echo "Running basic NATS test (5 seconds)..."
+	@timeout 5s docker run --rm -p 14222:4222 nats:2.11-alpine > /dev/null 2>&1 && \
+		echo "✅ Basic NATS container works" || \
+		echo "❌ Basic NATS container failed"
+	@echo ""
+	@echo "5. Checking NATS config syntax..."
+	@docker run --rm -v "./nats/nats-server.conf:/tmp/test.conf:ro" nats:2.11-alpine -t /tmp/test.conf > /dev/null 2>&1 && \
+		echo "✅ NATS config syntax is valid" || \
+		echo "❌ NATS config has syntax errors"
 
 # Help with NATS CLI installation
 install-cli: ## Install NATS CLI tool
@@ -265,3 +343,24 @@ install-cli: ## Install NATS CLI tool
 		echo "❌ Go not found. Please install Go first:"; \
 		echo "   https://golang.org/doc/install"; \
 	fi
+
+fix-permissions: ## Fix common permission issues
+	@echo "🔧 Fixing HYDRA development environment permissions..."
+	@if [ -d nats/logs ]; then \
+		echo "📁 Fixing logs directory permissions..."; \
+		sudo chown -R $(shell id -u):$(shell id -g) nats/logs 2>/dev/null || \
+			echo "⚠️  Could not change ownership. You may need to run: sudo chown -R $USER:$USER nats/logs"; \
+		chmod -R 755 nats/logs 2>/dev/null || echo "⚠️  Could not change permissions"; \
+		echo "✅ Permissions updated"; \
+	else \
+		echo "📁 Creating logs directory..."; \
+		mkdir -p nats/logs; \
+		chown $(shell id -u):$(shell id -g) nats/logs 2>/dev/null || true; \
+		chmod 755 nats/logs 2>/dev/null || true; \
+		echo "✅ Logs directory created"; \
+	fi
+
+# Quick fixes for common issues
+reset: clean setup ## Reset environment (stop, clean, and setup again)
+
+doctor: troubleshoot ## Alias for troubleshoot
