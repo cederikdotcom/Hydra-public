@@ -8,7 +8,7 @@ Production-parity development tools for building applications that run on HYDRA 
 # One command works on Windows, macOS, and Linux
 git clone https://github.com/hydrahardware/hydra-public.git
 cd hydra-public/dev-environment
-./quick-start.sh
+bash quick-start.sh (or chmod+x quick-start.sh && ./quick-start.sh)
 ```
 
 **That's it!** 🎉 You now have localhost:4222 NATS running exactly like HYDRA units.
