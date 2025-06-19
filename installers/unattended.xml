@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<unattend xmlns="urn:schemas-microsoft-com:unattend">
+    
+    <!-- OOBE System Pass - Runs during first boot -->
+    <settings pass="oobeSystem">
+        
+        <!-- Skip OOBE screens -->
+        <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            
+            <!-- OOBE Configuration -->
+            <OOBE>
+                <HideEULAPage>true</HideEULAPage>
+                <HideLocalAccountScreen>true</HideLocalAccountScreen>
+                <HideOEMRegistrationScreen>true</HideOEMRegistrationScreen>
+                <HideOnlineAccountScreens>true</HideOnlineAccountScreens>
+                <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
+                <NetworkLocation>Work</NetworkLocation>
+                <ProtectYourPC>1</ProtectYourPC>
+                <SkipUserOOBE>true</SkipUserOOBE>
+                <SkipMachineOOBE>true</SkipMachineOOBE>
+            </OOBE>
+            
+            <!-- Auto Logon Configuration -->
+            <AutoLogon>
+                <Password>
+                    <Value>Hydra</Value>
+                    <PlainText>true</PlainText>
+                </Password>
+                <Enabled>true</Enabled>
+                <LogonCount>1</LogonCount>
+                <Username>Hydra</Username>
+            </AutoLogon>
+            
+            <!-- User Accounts -->
+            <UserAccounts>
+                <LocalAccounts>
+                    <LocalAccount wcm:action="add">
+                        <Password>
+                            <Value>Hydra</Value>
+                            <PlainText>true</PlainText>
+                        </Password>
+                        <Group>Administrators</Group>
+                        <DisplayName>Hydra</DisplayName>
+                        <n>Hydra</n>
+                        <Description>Hydra Admin User</Description>
+                    </LocalAccount>
+                </LocalAccounts>
+            </UserAccounts>
+            
+            <!-- Computer Name with auto-generated suffix -->
+            <ComputerName>Hydra-*</ComputerName>
+            
+            <!-- Time Zone -->
+            <TimeZone>UTC</TimeZone>
+            
+            <!-- First Logon Commands - Setup system -->
+            <FirstLogonCommands>
+                <!-- Start SSH Service (already installed on reference machine) -->
+                <SynchronousCommand wcm:action="add">
+                    <Order>1</Order>
+                    <CommandLine>powershell.exe -Command "Start-Service sshd; Set-Service -Name sshd -StartupType Automatic"</CommandLine>
+                    <Description>Start SSH Service</Description>
+                </SynchronousCommand>
+                
+                <!-- Configure SSH Firewall -->
+                <SynchronousCommand wcm:action="add">
+                    <Order>2</Order>
+                    <CommandLine>powershell.exe -Command "New-NetFirewallRule -Name sshd -DisplayName 'OpenSSH Server (sshd)' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22 -ErrorAction SilentlyContinue"</CommandLine>
+                    <Description>Configure SSH Firewall</Description>
+                </SynchronousCommand>
+                
+                <!-- Ensure Hydra Body Daemon starts -->
+                <SynchronousCommand wcm:action="add">
+                    <Order>3</Order>
+                    <CommandLine>powershell.exe -Command "Start-Service HydraBodyDaemon -ErrorAction SilentlyContinue"</CommandLine>
+                    <Description>Start Hydra Body Daemon</Description>
+                </SynchronousCommand>
+                
+                <!-- Wait for network and daemon initialization -->
+                <SynchronousCommand wcm:action="add">
+                    <Order>4</Order>
+                    <CommandLine>powershell.exe -Command "Start-Sleep 10"</CommandLine>
+                    <Description>Wait for services to initialize</Description>
+                </SynchronousCommand>
+                
+            </FirstLogonCommands>
+            
+        </component>
+        
+        <!-- International Settings -->
+        <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <InputLocale>en-US</InputLocale>
+            <SystemLocale>en-US</SystemLocale>
+            <UILanguage>en-US</UILanguage>
+            <UserLocale>en-US</UserLocale>
+        </component>
+        
+    </settings>
+    
+    <!-- Specialize Pass -->
+    <settings pass="specialize">
+        <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <ComputerName>Hydra-*</ComputerName>
+            <CopyProfile>false</CopyProfile>
+        </component>
+    </settings>
+    
+</unattend>
