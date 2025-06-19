@@ -78,6 +78,8 @@ if ! command_exists docker; then
             fi
             echo "Installing Docker Desktop..."
             brew install --cask docker
+            echo "Installing make..."
+            brew install make
             echo -e "${YELLOW}⚠️  Please start Docker Desktop manually and run this script again${NC}"
             exit 1
             ;;
@@ -85,7 +87,7 @@ if ! command_exists docker; then
         "debian")
             echo -e "${BLUE}📦 Installing for Ubuntu/Debian...${NC}"
             sudo apt update
-            sudo apt install -y docker.io docker-compose git curl jq
+            sudo apt install -y docker.io docker-compose git curl jq make
             sudo systemctl start docker
             sudo systemctl enable docker
             sudo usermod -aG docker $USER
@@ -96,9 +98,9 @@ if ! command_exists docker; then
         "redhat")
             echo -e "${BLUE}📦 Installing for Red Hat/CentOS/Fedora...${NC}"
             if command_exists dnf; then
-                sudo dnf install -y docker docker-compose git curl jq
+                sudo dnf install -y docker docker-compose git curl jq make
             else
-                sudo yum install -y docker docker-compose git curl jq
+                sudo yum install -y docker docker-compose git curl jq make
             fi
             sudo systemctl start docker
             sudo systemctl enable docker
@@ -112,20 +114,62 @@ if ! command_exists docker; then
             echo -e "${YELLOW}Please install Docker Desktop for Windows:${NC}"
             echo "  1. Download: https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe"
             echo "  2. Install and start Docker Desktop"
-            echo "  3. Run this script again"
+            echo "  3. Install make: choco install make (or use Git Bash which includes make)"
+            echo "  4. Run this script again"
             exit 1
             ;;
             
         *)
             echo -e "${RED}❌ Unsupported OS: $OS${NC}"
-            echo "Please install Docker manually:"
-            echo "  Windows: https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe"
-            echo "  macOS: https://desktop.docker.com/mac/main/amd64/Docker.dmg"
-            echo "  Linux: Install docker.io package"
+            echo "Please install Docker and make manually:"
+            echo "  Windows: https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe + choco install make"
+            echo "  macOS: https://desktop.docker.com/mac/main/amd64/Docker.dmg + brew install make"
+            echo "  Linux: Install docker.io and make packages"
             exit 1
             ;;
     esac
 fi
+
+# Check if make is installed
+if ! command_exists make; then
+    echo -e "${YELLOW}⚠️  make not found. Installing...${NC}"
+    
+    case $OS in
+        "macos")
+            if ! command_exists brew; then
+                echo "Installing Homebrew first..."
+                /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+                # Add Homebrew to PATH for current session
+                if [[ -f "/opt/homebrew/bin/brew" ]]; then
+                    export PATH="/opt/homebrew/bin:$PATH"
+                fi
+            fi
+            brew install make
+            ;;
+        "debian")
+            sudo apt install -y make
+            ;;
+        "redhat")
+            if command_exists dnf; then
+                sudo dnf install -y make
+            else
+                sudo yum install -y make
+            fi
+            ;;
+        "windows")
+            echo -e "${YELLOW}For Windows:${NC}"
+            echo "  Git Bash: make is included"
+            echo "  PowerShell: choco install make"
+            echo "  WSL: sudo apt install make"
+            ;;
+        *)
+            echo -e "${RED}❌ Please install make manually${NC}"
+            exit 1
+            ;;
+    esac
+fi
+
+echo -e "${GREEN}✅ make is available${NC}"
 
 # Check if Docker is running
 if ! docker_running; then
@@ -182,31 +226,12 @@ DOCKER_COMPOSE_CMD=${DOCKER_COMPOSE_CMD:-"docker compose"}
 echo ""
 echo -e "${CYAN}Step 2: Starting HYDRA development environment...${NC}"
 
-# Navigate to nats directory
+# Navigate to nats directory and use make
 cd nats
 
-# Start the HYDRA development environment using docker compose
-echo "Starting NATS server..."
-$DOCKER_COMPOSE_CMD up -d nats
-
-# Wait for NATS to be ready
-echo "⏳ Waiting for NATS to be ready..."
-timeout=30
-while [ $timeout -gt 0 ]; do
-    if curl -f http://localhost:8222/healthz >/dev/null 2>&1; then
-        echo -e "${GREEN}✅ NATS is ready on localhost:4222${NC}"
-        break
-    fi
-    sleep 1
-    timeout=$((timeout-1))
-done
-
-if [ $timeout -eq 0 ]; then
-    echo -e "${RED}❌ NATS failed to start properly${NC}"
-    echo "Checking logs..."
-    $DOCKER_COMPOSE_CMD logs nats
-    exit 1
-fi
+# Start the HYDRA development environment using make
+echo "Starting HYDRA environment with make..."
+make start
 
 echo ""
 echo -e "${GREEN}"
@@ -262,11 +287,13 @@ echo "EOF"
 echo ""
 echo "go mod init test && go get github.com/nats-io/nats.go && go run test-app.go"
 echo ""
-echo -e "${BLUE}Management commands:${NC}"
-echo "./status.sh         # Check if NATS is running"
-echo "./stop.sh           # Stop the environment"
-echo "./logs.sh           # View NATS logs"
-echo "./test.sh           # Test connectivity"
+echo -e "${BLUE}Management commands (using make):${NC}"
+echo "make help           # Show all available commands"
+echo "make status         # Check if NATS is running"
+echo "make test           # Test connectivity"
+echo "make logs           # View NATS logs"
+echo "make stop           # Stop the environment"
+echo "make clean          # Stop and clean up everything"
 echo ""
 echo -e "${GREEN}🎯 Your applications can now connect to localhost:4222${NC}"
 echo -e "${GREEN}   This works exactly the same on HYDRA production units!${NC}"
@@ -279,28 +306,8 @@ if [[ "$response" =~ ^[Yy]$ ]]; then
     echo ""
     echo -e "${CYAN}Running connectivity test...${NC}"
     
-    # Basic connectivity test
-    if curl -f http://localhost:8222/varz >/dev/null 2>&1; then
-        echo -e "${GREEN}✅ NATS HTTP monitoring is responding${NC}"
-        if command_exists jq; then
-            echo "Server name: $(curl -s http://localhost:8222/varz | jq -r .server_name)"
-        fi
-    else
-        echo -e "${RED}❌ NATS HTTP monitoring not responding${NC}"
-    fi
-    
-    # Check if NATS CLI is available for advanced test
-    if command_exists nats; then
-        echo "Testing NATS connection with CLI..."
-        if nats --server localhost:4222 --user app-limited --password dev-password-change-in-production \
-               pub app.test.connectivity "Quick test message" >/dev/null 2>&1; then
-            echo -e "${GREEN}✅ NATS messaging is working${NC}"
-        else
-            echo -e "${YELLOW}⚠️  NATS CLI test failed (this might be normal)${NC}"
-        fi
-    else
-        echo -e "${BLUE}💡 Install NATS CLI for advanced testing${NC}"
-    fi
+    # Use make for testing
+    make test
     
     echo ""
     echo -e "${GREEN}✅ Connectivity test completed!${NC}"
