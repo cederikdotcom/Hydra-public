@@ -30,7 +30,7 @@ install-docker: ## Install Docker and prerequisites
 		echo "📦 Installing for Ubuntu/Debian..."; \
 		sudo apt update; \
 		if ! command -v docker >/dev/null 2>&1; then \
-			sudo apt install -y docker.io docker-compose git make curl jq; \
+			sudo apt install -y docker.io git make curl jq; \
 			sudo systemctl start docker; \
 			sudo systemctl enable docker; \
 			sudo usermod -aG docker $USER; \
@@ -40,9 +40,9 @@ install-docker: ## Install Docker and prerequisites
 	elif [ -f /etc/redhat-release ]; then \
 		echo "📦 Installing for Red Hat/CentOS/Fedora..."; \
 		if command -v dnf >/dev/null 2>&1; then \
-			sudo dnf install -y docker docker-compose git make curl jq; \
+			sudo dnf install -y docker git make curl jq; \
 		else \
-			sudo yum install -y docker docker-compose git make curl jq; \
+			sudo yum install -y docker git make curl jq; \
 		fi; \
 		sudo systemctl start docker; \
 		sudo systemctl enable docker; \
@@ -83,6 +83,7 @@ quick-start: ## One-command setup: install prerequisites and start HYDRA environ
 	@echo ""
 	@echo "🎯 Your applications can now connect to localhost:4222"
 	@echo "   This works exactly the same on HYDRA production units!"
+
 setup: ## Initial setup - prepare environment (use quick-start for full setup)
 	@echo "📥 Setting up HYDRA development environment..."
 	@if [ ! -f docker-compose.yml ]; then \
@@ -102,7 +103,7 @@ start: ## Start HYDRA development NATS server
 		exit 1; \
 	fi
 	@echo "📡 Starting NATS server..."
-	@docker-compose up -d nats
+	@docker compose up -d nats
 	@echo "⏳ Waiting for NATS to be ready..."
 	@timeout=30; \
 	while [ $$timeout -gt 0 ]; do \
@@ -115,7 +116,7 @@ start: ## Start HYDRA development NATS server
 	done; \
 	if [ $$timeout -eq 0 ]; then \
 		echo "❌ NATS failed to start properly"; \
-		docker-compose logs nats; \
+		docker compose logs nats; \
 		exit 1; \
 	fi
 	@echo ""
@@ -134,14 +135,7 @@ start: ## Start HYDRA development NATS server
 
 stop: ## Stop HYDRA development NATS server
 	@echo "🛑 Stopping HYDRA Development NATS..."
-	@if docker compose version >/dev/null 2>&1; then \
-		docker compose down; \
-	elif command -v docker-compose >/dev/null 2>&1; then \
-		docker-compose down; \
-	else \
-		echo "❌ Neither 'docker compose' nor 'docker-compose' found"; \
-		exit 1; \
-	fi
+	@docker compose down
 	@echo "✅ NATS stopped"
 
 restart: stop start ## Restart NATS server
@@ -149,35 +143,18 @@ restart: stop start ## Restart NATS server
 status: ## Show status of HYDRA development environment
 	@echo "📊 HYDRA Development Environment Status"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@if docker compose version >/dev/null 2>&1; then \
-		if docker compose ps | grep -q "hydra-dev-nats.*Up"; then \
-			echo "✅ NATS Server: Running"; \
-			if curl -f http://localhost:8222/healthz > /dev/null 2>&1; then \
-				echo "✅ Health Check: Passing"; \
-			else \
-				echo "❌ Health Check: Failing"; \
-			fi; \
+	@if docker compose ps | grep -q "hydra-dev-nats.*Up"; then \
+		echo "✅ NATS Server: Running"; \
+		if curl -f http://localhost:8222/healthz > /dev/null 2>&1; then \
+			echo "✅ Health Check: Passing"; \
 		else \
-			echo "❌ NATS Server: Not Running"; \
+			echo "❌ Health Check: Failing"; \
 		fi; \
-		echo ""; \
-		docker compose ps; \
-	elif command -v docker-compose >/dev/null 2>&1; then \
-		if docker-compose ps | grep -q "hydra-dev-nats.*Up"; then \
-			echo "✅ NATS Server: Running"; \
-			if curl -f http://localhost:8222/healthz > /dev/null 2>&1; then \
-				echo "✅ Health Check: Passing"; \
-			else \
-				echo "❌ Health Check: Failing"; \
-			fi; \
-		else \
-			echo "❌ NATS Server: Not Running"; \
-		fi; \
-		echo ""; \
-		docker-compose ps; \
 	else \
-		echo "❌ Neither 'docker compose' nor 'docker-compose' found"; \
-	fi
+		echo "❌ NATS Server: Not Running"; \
+	fi; \
+	echo ""; \
+	docker compose ps
 
 health: ## Check NATS health and connectivity
 	@echo "🩺 HYDRA Development NATS Health Check"
@@ -214,39 +191,18 @@ test: health ## Test NATS connection and functionality
 logs: ## Show NATS server logs
 	@echo "📋 HYDRA Development NATS Logs"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@if docker compose version >/dev/null 2>&1; then \
-		docker compose logs -f nats; \
-	elif command -v docker-compose >/dev/null 2>&1; then \
-		docker-compose logs -f nats; \
-	else \
-		echo "❌ Neither 'docker compose' nor 'docker-compose' found"; \
-	fi
+	@docker compose logs -f nats
 
 monitor: ## Start monitoring dashboard
 	@echo "📊 Starting HYDRA Development Monitoring..."
-	@if docker compose version >/dev/null 2>&1; then \
-		docker compose --profile monitoring up -d; \
-	elif command -v docker-compose >/dev/null 2>&1; then \
-		docker-compose --profile monitoring up -d; \
-	else \
-		echo "❌ Neither 'docker compose' nor 'docker-compose' found"; \
-		exit 1; \
-	fi
+	@docker compose --profile monitoring up -d
 	@echo "✅ Monitoring dashboard available at: http://localhost:7777"
 	@echo "✅ NATS monitoring at: http://localhost:8222"
 
 clean: stop ## Stop and remove all containers and volumes
 	@echo "🧹 Cleaning up HYDRA development environment..."
-	@if docker compose version >/dev/null 2>&1; then \
-		docker compose down -v --remove-orphans; \
-		docker compose --profile monitoring down -v --remove-orphans 2>/dev/null || true; \
-	elif command -v docker-compose >/dev/null 2>&1; then \
-		docker-compose down -v --remove-orphans; \
-		docker-compose --profile monitoring down -v --remove-orphans 2>/dev/null || true; \
-	else \
-		echo "❌ Neither 'docker compose' nor 'docker-compose' found"; \
-		exit 1; \
-	fi
+	@docker compose down -v --remove-orphans
+	@docker compose --profile monitoring down -v --remove-orphans 2>/dev/null || true
 	@echo "✅ Cleanup complete"
 
 # Development workflow targets
@@ -276,7 +232,7 @@ info: ## Show connection information
 # Advanced targets
 pull: ## Pull latest NATS images
 	@echo "📥 Pulling latest NATS images..."
-	@docker-compose pull
+	@docker compose pull
 	@echo "✅ Images updated"
 
 update: pull restart ## Update NATS images and restart
@@ -290,7 +246,7 @@ debug: ## Show debug information
 	@docker info --format "  Version: {{.ServerVersion}}"
 	@echo ""
 	@echo "Container Status:"
-	@docker-compose ps
+	@docker compose ps
 	@echo ""
 	@echo "Network Status:"
 	@netstat -an | grep ":4222\|:6222\|:8222" || echo "  No NATS ports found"
