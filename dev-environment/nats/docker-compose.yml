@@ -7,7 +7,7 @@ services:
       - "6222:6222"    # Cluster port (for completeness)
       - "8222:8222"    # HTTP monitoring (development only)
     volumes:
-      - "./nats/nats-server.conf:/etc/nats/nats-server.conf"
+      - "./nats/nats-server.conf:/etc/nats/nats-server.conf:ro"
       - "./nats/logs:/var/log/nats"
     command: ["-c", "/etc/nats/nats-server.conf"]
     restart: unless-stopped
@@ -16,9 +16,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+      start_period: 30s
     networks:
       - hydra-dev
-
+    # Ensure proper user permissions for logs
+    user: "1000:1000"
   # Optional: NATS monitoring UI for development
   nats-surveyor:
     image: natsio/nats-surveyor:latest
@@ -29,12 +31,12 @@ services:
       - NATS_SURVEYOR_SERVER_COUNT=1
       - NATS_SURVEYOR_SERVERS=nats://nats:4222
     depends_on:
-      - nats
+      nats:
+        condition: service_healthy
     networks:
       - hydra-dev
     profiles:
       - monitoring
-
 networks:
   hydra-dev:
     driver: bridge
