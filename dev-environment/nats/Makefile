@@ -1,0 +1,193 @@
+# HYDRA Development NATS Environment
+# Provides production-parity localhost:4222 for development
+
+.PHONY: help start stop restart status test logs clean monitor setup install health
+
+# Default target
+help: ## Show this help message
+	@echo "🚀 HYDRA Development NATS Environment"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "Provides localhost:4222 NATS that matches HYDRA production"
+	@echo ""
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+setup: ## Initial setup - download and prepare environment
+	@echo "📥 Setting up HYDRA development environment..."
+	@if [ ! -f docker-compose.yml ]; then \
+		echo "❌ docker-compose.yml not found. Please ensure you're in the hydra-public/dev-environment/nats directory"; \
+		exit 1; \
+	fi
+	@mkdir -p nats/logs
+	@echo "✅ Setup complete"
+
+install: setup ## Install (alias for setup)
+
+start: ## Start HYDRA development NATS server
+	@echo "🚀 Starting HYDRA Development NATS Environment..."
+	@if ! docker info > /dev/null 2>&1; then \
+		echo "❌ Docker is not running. Please start Docker first."; \
+		exit 1; \
+	fi
+	@echo "📡 Starting NATS server..."
+	@docker-compose up -d nats
+	@echo "⏳ Waiting for NATS to be ready..."
+	@timeout=30; \
+	while [ $$timeout -gt 0 ]; do \
+		if curl -f http://localhost:8222/healthz > /dev/null 2>&1; then \
+			echo "✅ NATS is ready on localhost:4222"; \
+			break; \
+		fi; \
+		sleep 1; \
+		timeout=$$((timeout-1)); \
+	done; \
+	if [ $$timeout -eq 0 ]; then \
+		echo "❌ NATS failed to start properly"; \
+		docker-compose logs nats; \
+		exit 1; \
+	fi
+	@echo ""
+	@echo "🎯 HYDRA Development Environment Ready!"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "NATS Client URL:    nats://localhost:4222"
+	@echo "NATS Monitoring:    http://localhost:8222"
+	@echo "Health Check:       http://localhost:8222/healthz"
+	@echo ""
+	@echo "Credentials:"
+	@echo "  User: app-limited"
+	@echo "  Pass: dev-password-change-in-production"
+	@echo ""
+	@echo "🎯 Your application can now connect to localhost:4222"
+	@echo "   This matches exactly how it works on HYDRA units!"
+
+stop: ## Stop HYDRA development NATS server
+	@echo "🛑 Stopping HYDRA Development NATS..."
+	@docker-compose down
+	@echo "✅ NATS stopped"
+
+restart: stop start ## Restart NATS server
+
+status: ## Show status of HYDRA development environment
+	@echo "📊 HYDRA Development Environment Status"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@if docker-compose ps | grep -q "hydra-dev-nats.*Up"; then \
+		echo "✅ NATS Server: Running"; \
+		if curl -f http://localhost:8222/healthz > /dev/null 2>&1; then \
+			echo "✅ Health Check: Passing"; \
+		else \
+			echo "❌ Health Check: Failing"; \
+		fi; \
+	else \
+		echo "❌ NATS Server: Not Running"; \
+	fi
+	@echo ""
+	@docker-compose ps
+
+health: ## Check NATS health and connectivity
+	@echo "🩺 HYDRA Development NATS Health Check"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@if ! curl -f http://localhost:8222/varz > /dev/null 2>&1; then \
+		echo "❌ NATS server not responding on localhost:8222"; \
+		echo "💡 Run: make start"; \
+		exit 1; \
+	fi
+	@echo "✅ NATS server is running on localhost:4222"
+	@echo "✅ HTTP monitoring available on localhost:8222"
+	@if command -v nats >/dev/null 2>&1; then \
+		echo "📡 Testing publish/subscribe..."; \
+		nats --server localhost:4222 --user app-limited --password dev-password-change-in-production \
+			pub app.test.health "Health check from make" > /dev/null 2>&1 && \
+			echo "✅ Message publishing works" || \
+			echo "❌ Message publishing failed"; \
+	else \
+		echo "💡 Install nats CLI for advanced testing:"; \
+		echo "   go install github.com/nats-io/natscli/nats@latest"; \
+	fi
+
+test: health ## Test NATS connection and functionality
+	@echo ""
+	@echo "🧪 Running Connection Tests..."
+	@if command -v nats >/dev/null 2>&1; then \
+		echo "📊 NATS Server Info:"; \
+		nats --server localhost:4222 --user app-limited --password dev-password-change-in-production \
+			server info 2>/dev/null || echo "❌ Failed to get server info"; \
+	fi
+	@echo ""
+	@echo "🎯 Development environment ready for your application!"
+
+logs: ## Show NATS server logs
+	@echo "📋 HYDRA Development NATS Logs"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@docker-compose logs -f nats
+
+monitor: ## Start monitoring dashboard
+	@echo "📊 Starting HYDRA Development Monitoring..."
+	@docker-compose --profile monitoring up -d
+	@echo "✅ Monitoring dashboard available at: http://localhost:7777"
+	@echo "✅ NATS monitoring at: http://localhost:8222"
+
+clean: stop ## Stop and remove all containers and volumes
+	@echo "🧹 Cleaning up HYDRA development environment..."
+	@docker-compose down -v --remove-orphans
+	@docker-compose --profile monitoring down -v --remove-orphans
+	@echo "✅ Cleanup complete"
+
+# Development workflow targets
+dev-start: start ## Start development environment (alias for start)
+
+dev-test: start test ## Start environment and run tests
+
+dev-stop: stop ## Stop development environment (alias for stop)
+
+# Quick access to common info
+info: ## Show connection information
+	@echo "🎯 HYDRA Development Environment Info"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "NATS URL:     nats://localhost:4222"
+	@echo "Monitor:      http://localhost:8222"
+	@echo "Health:       http://localhost:8222/healthz"
+	@echo ""
+	@echo "Authentication:"
+	@echo "  User:       app-limited"
+	@echo "  Password:   dev-password-change-in-production"
+	@echo ""
+	@echo "Subject Namespace:"
+	@echo "  Your App:   app.yourapp.*"
+	@echo "  NimsForest: app.nimsforest.*"
+	@echo "  Telemetry:  telemetry.*"
+
+# Advanced targets
+pull: ## Pull latest NATS images
+	@echo "📥 Pulling latest NATS images..."
+	@docker-compose pull
+	@echo "✅ Images updated"
+
+update: pull restart ## Update NATS images and restart
+
+# Development debugging
+debug: ## Show debug information
+	@echo "🔍 HYDRA Development Debug Information"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "Docker Status:"
+	@docker --version
+	@docker info --format "  Version: {{.ServerVersion}}"
+	@echo ""
+	@echo "Container Status:"
+	@docker-compose ps
+	@echo ""
+	@echo "Network Status:"
+	@netstat -an | grep ":4222\|:6222\|:8222" || echo "  No NATS ports found"
+	@echo ""
+	@echo "Environment Files:"
+	@ls -la nats/ 2>/dev/null || echo "  nats/ directory not found"
+
+# Help with NATS CLI installation
+install-cli: ## Install NATS CLI tool
+	@echo "📦 Installing NATS CLI tool..."
+	@if command -v go >/dev/null 2>&1; then \
+		go install github.com/nats-io/natscli/nats@latest; \
+		echo "✅ NATS CLI installed successfully"; \
+		echo "💡 Make sure $(go env GOPATH)/bin is in your PATH"; \
+	else \
+		echo "❌ Go not found. Please install Go first:"; \
+		echo "   https://golang.org/doc/install"; \
+	fi
