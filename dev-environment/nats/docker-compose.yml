@@ -8,7 +8,6 @@ services:
       - "8222:8222"    # HTTP monitoring (development only)
     volumes:
       - "./nats/nats-server.conf:/etc/nats/nats-server.conf:ro"
-      - "./nats/logs:/var/log/nats"
     command: ["-c", "/etc/nats/nats-server.conf"]
     restart: unless-stopped
     healthcheck:
@@ -19,8 +18,8 @@ services:
       start_period: 30s
     networks:
       - hydra-dev
-    # Ensure proper user permissions for logs
-    user: "1000:1000"
+    # Removed user directive - not needed without file logging
+
   # Optional: NATS monitoring UI for development
   nats-surveyor:
     image: natsio/nats-surveyor:latest
@@ -37,6 +36,7 @@ services:
       - hydra-dev
     profiles:
       - monitoring
+
 networks:
   hydra-dev:
     driver: bridge
