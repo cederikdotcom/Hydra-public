@@ -11,7 +11,6 @@ help: ## Show available commands
 
 start: ## Start NATS server
 	@echo "🚀 Starting HYDRA Development NATS..."
-	@mkdir -p nats/logs
 	@docker compose up -d nats
 	@echo "⏳ Waiting for NATS..."
 	@for i in {1..30}; do \
@@ -69,6 +68,12 @@ clean: ## Stop and remove everything
 	@echo "🧹 Cleaning up..."
 	@docker compose down -v --remove-orphans
 	@echo "✅ Clean"
+
+fix-logs: ## Fix log file permissions
+	@echo "🔧 Fixing log permissions..."
+	@mkdir -p nats/logs
+	@chmod 777 nats/logs 2>/dev/null || sudo chmod 777 nats/logs || echo "⚠️  Run: sudo chmod 777 nats/logs"
+	@echo "✅ Log permissions fixed"
 
 # Quick aliases
 up: start
