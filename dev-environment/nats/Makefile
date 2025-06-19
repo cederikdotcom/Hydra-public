@@ -1,7 +1,7 @@
 # HYDRA Development NATS Environment
 # Provides production-parity localhost:4222 for development
 
-.PHONY: help start stop restart status test logs clean monitor setup install health
+.PHONY: help start stop restart status test logs clean monitor setup install health install-docker quick-start
 
 # Default target
 help: ## Show this help message
@@ -11,7 +11,79 @@ help: ## Show this help message
 	@echo ""
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-setup: ## Initial setup - download and prepare environment
+install-docker: ## Install Docker and prerequisites
+	@echo "🚀 Installing Docker and prerequisites for HYDRA development..."
+	@if [ "$(uname)" = "Darwin" ]; then \
+		echo "📦 Installing for macOS..."; \
+		if ! command -v brew >/dev/null 2>&1; then \
+			echo "Installing Homebrew..."; \
+			/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; \
+		fi; \
+		if ! command -v docker >/dev/null 2>&1; then \
+			echo "Installing Docker Desktop..."; \
+			brew install --cask docker; \
+			echo "⚠️  Please start Docker Desktop manually and run 'make quick-start' again"; \
+			exit 1; \
+		fi; \
+		brew install git make curl jq 2>/dev/null || true; \
+	elif [ -f /etc/debian_version ]; then \
+		echo "📦 Installing for Ubuntu/Debian..."; \
+		sudo apt update; \
+		if ! command -v docker >/dev/null 2>&1; then \
+			sudo apt install -y docker.io docker-compose git make curl jq; \
+			sudo systemctl start docker; \
+			sudo systemctl enable docker; \
+			sudo usermod -aG docker $USER; \
+			echo "⚠️  Please log out and back in, then run 'make quick-start'"; \
+			exit 1; \
+		fi; \
+	elif [ -f /etc/redhat-release ]; then \
+		echo "📦 Installing for Red Hat/CentOS/Fedora..."; \
+		if command -v dnf >/dev/null 2>&1; then \
+			sudo dnf install -y docker docker-compose git make curl jq; \
+		else \
+			sudo yum install -y docker docker-compose git make curl jq; \
+		fi; \
+		sudo systemctl start docker; \
+		sudo systemctl enable docker; \
+		sudo usermod -aG docker $USER; \
+		echo "⚠️  Please log out and back in, then run 'make quick-start'"; \
+		exit 1; \
+	else \
+		echo "❌ Unsupported OS. Please install Docker manually"; \
+		exit 1; \
+	fi
+	@echo "✅ Prerequisites installed successfully!"
+
+quick-start: ## One-command setup: install prerequisites and start HYDRA environment
+	@echo "🚀 HYDRA Development Environment - Quick Start"
+	@echo "=============================================="
+	@echo ""
+	@if ! docker info >/dev/null 2>&1; then \
+		echo "Docker not found or not running. Installing prerequisites..."; \
+		$(MAKE) install-docker; \
+	fi
+	@echo "🎯 Starting HYDRA development environment..."
+	@$(MAKE) start
+	@echo ""
+	@echo "🎉 SUCCESS! HYDRA Development Environment is Ready!"
+	@echo "=================================================="
+	@echo ""
+	@echo "🎯 NATS Server:     nats://localhost:4222"
+	@echo "📊 Monitoring:      http://localhost:8222"
+	@echo "🩺 Health Check:    http://localhost:8222/healthz"
+	@echo ""
+	@echo "👤 User:            app-limited"
+	@echo "🔑 Password:        dev-password-change-in-production"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  make test          # Test connectivity"
+	@echo "  make info          # Show connection details"
+	@echo "  make install-cli   # Install NATS CLI (optional)"
+	@echo ""
+	@echo "🎯 Your applications can now connect to localhost:4222"
+	@echo "   This works exactly the same on HYDRA production units!"
+setup: ## Initial setup - prepare environment (use quick-start for full setup)
 	@echo "📥 Setting up HYDRA development environment..."
 	@if [ ! -f docker-compose.yml ]; then \
 		echo "❌ docker-compose.yml not found. Please ensure you're in the hydra-public/dev-environment/nats directory"; \
@@ -19,6 +91,7 @@ setup: ## Initial setup - download and prepare environment
 	fi
 	@mkdir -p nats/logs
 	@echo "✅ Setup complete"
+	@echo "💡 Use 'make quick-start' for automatic Docker installation and startup"
 
 install: setup ## Install (alias for setup)
 
@@ -61,7 +134,14 @@ start: ## Start HYDRA development NATS server
 
 stop: ## Stop HYDRA development NATS server
 	@echo "🛑 Stopping HYDRA Development NATS..."
-	@docker-compose down
+	@if docker compose version >/dev/null 2>&1; then \
+		docker compose down; \
+	elif command -v docker-compose >/dev/null 2>&1; then \
+		docker-compose down; \
+	else \
+		echo "❌ Neither 'docker compose' nor 'docker-compose' found"; \
+		exit 1; \
+	fi
 	@echo "✅ NATS stopped"
 
 restart: stop start ## Restart NATS server
@@ -69,18 +149,35 @@ restart: stop start ## Restart NATS server
 status: ## Show status of HYDRA development environment
 	@echo "📊 HYDRA Development Environment Status"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@if docker-compose ps | grep -q "hydra-dev-nats.*Up"; then \
-		echo "✅ NATS Server: Running"; \
-		if curl -f http://localhost:8222/healthz > /dev/null 2>&1; then \
-			echo "✅ Health Check: Passing"; \
+	@if docker compose version >/dev/null 2>&1; then \
+		if docker compose ps | grep -q "hydra-dev-nats.*Up"; then \
+			echo "✅ NATS Server: Running"; \
+			if curl -f http://localhost:8222/healthz > /dev/null 2>&1; then \
+				echo "✅ Health Check: Passing"; \
+			else \
+				echo "❌ Health Check: Failing"; \
+			fi; \
 		else \
-			echo "❌ Health Check: Failing"; \
+			echo "❌ NATS Server: Not Running"; \
 		fi; \
+		echo ""; \
+		docker compose ps; \
+	elif command -v docker-compose >/dev/null 2>&1; then \
+		if docker-compose ps | grep -q "hydra-dev-nats.*Up"; then \
+			echo "✅ NATS Server: Running"; \
+			if curl -f http://localhost:8222/healthz > /dev/null 2>&1; then \
+				echo "✅ Health Check: Passing"; \
+			else \
+				echo "❌ Health Check: Failing"; \
+			fi; \
+		else \
+			echo "❌ NATS Server: Not Running"; \
+		fi; \
+		echo ""; \
+		docker-compose ps; \
 	else \
-		echo "❌ NATS Server: Not Running"; \
+		echo "❌ Neither 'docker compose' nor 'docker-compose' found"; \
 	fi
-	@echo ""
-	@docker-compose ps
 
 health: ## Check NATS health and connectivity
 	@echo "🩺 HYDRA Development NATS Health Check"
@@ -117,18 +214,39 @@ test: health ## Test NATS connection and functionality
 logs: ## Show NATS server logs
 	@echo "📋 HYDRA Development NATS Logs"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@docker-compose logs -f nats
+	@if docker compose version >/dev/null 2>&1; then \
+		docker compose logs -f nats; \
+	elif command -v docker-compose >/dev/null 2>&1; then \
+		docker-compose logs -f nats; \
+	else \
+		echo "❌ Neither 'docker compose' nor 'docker-compose' found"; \
+	fi
 
 monitor: ## Start monitoring dashboard
 	@echo "📊 Starting HYDRA Development Monitoring..."
-	@docker-compose --profile monitoring up -d
+	@if docker compose version >/dev/null 2>&1; then \
+		docker compose --profile monitoring up -d; \
+	elif command -v docker-compose >/dev/null 2>&1; then \
+		docker-compose --profile monitoring up -d; \
+	else \
+		echo "❌ Neither 'docker compose' nor 'docker-compose' found"; \
+		exit 1; \
+	fi
 	@echo "✅ Monitoring dashboard available at: http://localhost:7777"
 	@echo "✅ NATS monitoring at: http://localhost:8222"
 
 clean: stop ## Stop and remove all containers and volumes
 	@echo "🧹 Cleaning up HYDRA development environment..."
-	@docker-compose down -v --remove-orphans
-	@docker-compose --profile monitoring down -v --remove-orphans
+	@if docker compose version >/dev/null 2>&1; then \
+		docker compose down -v --remove-orphans; \
+		docker compose --profile monitoring down -v --remove-orphans 2>/dev/null || true; \
+	elif command -v docker-compose >/dev/null 2>&1; then \
+		docker-compose down -v --remove-orphans; \
+		docker-compose --profile monitoring down -v --remove-orphans 2>/dev/null || true; \
+	else \
+		echo "❌ Neither 'docker compose' nor 'docker-compose' found"; \
+		exit 1; \
+	fi
 	@echo "✅ Cleanup complete"
 
 # Development workflow targets
